@@ -3,7 +3,7 @@
 
 
 
-def pricing(cost, amount):
+def pay(cost, amount):
 	toCharge = cost * amount
 	return toCharge
 

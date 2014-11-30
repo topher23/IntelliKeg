@@ -10,7 +10,7 @@ GPIO.setup(12, GPIO.IN)
 
 
 
-def flowing (price):
+def flowing(price):
 	count = 0
 	realtime = time.time()
 	prevtime = time.time()
