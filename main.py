@@ -4,6 +4,8 @@ import solenoid
 import pricing
 import flowmeter
 import time
+import requests
+import sms
 
 
 
@@ -12,6 +14,8 @@ class Kegerator:
 
 	def __init__ (self):
 		#in reaility we will get these from the db
+		self.price = 0
+		self.type = ""
 		self.beer1price = 0.00571
 		self.beer1type = "Alewerks"
 		self.beer2price = 0.00450
@@ -31,6 +35,8 @@ class Kegerator:
 			if state == 1:
 				lcd.message("Awaiting user\n credentials")
 				ident = raw_input()
+				#make request with token.
+				#will get reply with users id
 				#name = getnamefromdb
 				#if name is in database with credentials
 				#	lcd.message("User Validated\nWelcome %s " % (name))
@@ -43,10 +49,13 @@ class Kegerator:
 				beer = raw_input()
 				if beer == "*":
 					lcd.message("Dispensing %s" % self.beer1type)
+					self.price = self.beer1price
+					self.type = self.beer1type
 					state = 3
 				elif beer == "\\":
 					lcd.message("Dispensing %s" % self.beer2type)
-					beertype = False
+					self.price = self.beer2price
+					self.type = self.beer2type
 					state = 3
 				else:
 					lcd.message("Invalid choice \n Try again")
@@ -55,12 +64,14 @@ class Kegerator:
 				solenoid.open()
 				amount = flowmeter.flowing()
 				solenoid.close()
-				if beertype:
-					toCharge = pricing.calculate(beer1price, amount)
-				else
-					toCharge = pricing.calculate(beer2price, amount)
+				toCharge = pricing.calculate(self.beerprice, amount)
 				#charge to stripe code goes here
+				returnval = request.post()
+				sms.send_recipt(phone, quantity, self.beer, toCharge)
 
+				
+
+#so i enter the card, it is tokenized, send all information for creating a customer, get individual customer id, hook that with the pin in my db, user enters pin and i can make a call to stripe with this user id. 
 
 
 
