@@ -4,13 +4,15 @@ import datetime
 import RPi.GPIO as GPIO
 
 
-GPIO.setmode(GPIO.BOARD)
-GPIO.setup(12, GPIO.IN)
+
+def __init__(self, pin):
+
+if __name__ == "__main__":
+	GPIO.setmode(GPIO.BOARD)
+	GPIO.setup(12, GPIO.IN)
 
 
-
-
-def flowing(price):
+def flowing():
 	count = 0
 	realtime = time.time()
 	prevtime = time.time()
@@ -28,13 +30,7 @@ def flowing(price):
 			realtime = time.time()
 
 		tdelta = realtime - prevtime
-		if tdelta > 2:
+		if tdelta > 2 and count > 1:
 			break
 
 	return count
-
-
-
-
-
-flowing (1)
