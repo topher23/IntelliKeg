@@ -3,24 +3,23 @@ import time
 import datetime
 import RPi.GPIO as GPIO
 
+class FlowmeterValve():
+
+	def __init__(self, pin):
+		self._pin = pin
+		GPIO.setmode(GPIO.BOARD)
+		GPIO.setup(pin, GPIO.IN)
 
 
-def __init__(self, pin):
-
-if __name__ == "__main__":
-	GPIO.setmode(GPIO.BOARD)
-	GPIO.setup(12, GPIO.IN)
-
-
-def flowing():
+def flowing(self):
 	count = 0
 	realtime = time.time()
 	prevtime = time.time()
 
 	while True:
-		prevtest = GPIO.input(12)
+		prevtest = GPIO.input(self._pin)
 		time.sleep(.01)
-		test = GPIO.input(12)
+		test = GPIO.input(self._pin)
 
 		if (test == 0 and prevtest == 1) or (test == 1 and prevtest == 0):
 			count += 1
