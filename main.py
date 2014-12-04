@@ -13,20 +13,20 @@ import json
 
 class Kegerator:
 
-	def __init__ (self):
+	def __init__ (self, solenoid, flowmeter):
 		#in reaility we will get these from the db
 		self.beer1price = 0.00571
 		self.beer1type = "Alewerks"
 		self.beer2price = 0.00450
 		self.beer2type =  "Shock Top"
 		self.apikey = "intellikeg123"
+		self.solenoid = solenoid
+		self.flowmeter = flowmeter
 
 
 	#turn on gpio pins
 	def initialize(self):
 		GPIO.setmode(GPIO.BOARD)
-		GPIO.setup(12, GPIO.IN) #flowmeter
-		GPIO.setup(7, GPIO.OUT, initial = GPIO.LOW) #solenoid
 		
 	def pinChecking(pin):
 		data = {"apikey":self.apikey, "userid":ident}
@@ -34,17 +34,18 @@ class Kegerator:
 		if IDandPHONE == 0:
 			return False
 		else:
-			return IDandPHONE
+			return IDandPHONE.json()
+
 
 	def beerSelection(beer):
 		if beer == "*":
-			return {"price": self.beer1price, "type": self.beer1type}
+			return {"price": self.beer1price, "type": self.beer1type, "amount":0}
 		elif beer == "\\":
-			return {"price": self.beer2price, "type": self.beer2type}
+			return {"price": self.beer2price, "type": self.beer2type, "amount":0}
 		else:
 			return False
 
-	def run():
+	def run(self):
 		attempts = 0
 		while True:
 			beertype = True
@@ -72,32 +73,30 @@ class Kegerator:
 
 
 			#actual dispensing of the beer
-			solenoid = SolenoidValve(7)
-			flowmeter = FlowmeterValve(12)
-			solenoid.open()
-			amount = flowmeter.flowing()
-			solenoid.close()
+			keg.solenoid.open()
+			beer["amount"] = keg.flowmeter.flowing()
+			keg.solenoid.close()
 
 
 			#charging & sms state
-			elif state == 4:
-				ounces = pricing.amountOZ(amount)
-				toCharge = pricing.calculate(self.beerprice, amount)
-				chargeData = {self.apikey, user id key, toCharge}
-				returnval = requests.post("shaped-pride-770.appspot.com/account/user/charge", params=chargeData)
-				if returnval:
-					new_returnval = sms.send_recipt(phone, ounces, self.beertype, toCharge)
-					if new_returnval:
-						lcd.message("Transaction completed. Thank You")
-						time.sleep(5)
-						state = 1
-					elif new_returnval == False
-						lcd.message("Invalid account info. Abort.")
-						state = 1
+			ounces = pricing.amountOZ(beer["amount"])
+			toCharge = pricing.calculate(beer["price"], beer["amount"])
+			chargeData = {self.apikey, user["id"], toCharge}
+			returnval = requests.post("shaped-pride-770.appspot.com/account/user/charge", params=chargeData)
+			if returnval:
+				new_returnval = sms.send_recipt(user["phone"], ounces, beer["type"], toCharge)
+				if new_returnval:
+					lcd.message("Transaction completed. Thank You")
+					time.sleep(5)
+				elif new_returnval == False:
+					lcd.message("Invalid account info. Abort.")
+					time.sleep(2)
 				elif attempts >= 5:
 					lcd.message("Invalid account info. Abort.")
 					time.sleep(2)
-					state = 1
+			else:
+				lcd.message("Invalid charge info. Abort.")
+				time.sleep(2)
 								
 
 #so i enter the card, it is tokenized, send all information for creating a customer, 
@@ -105,7 +104,7 @@ class Kegerator:
 #an make a call to stripe with this user id. 
 
 
-keg = Kegerator()#creates new keg object
+keg = Kegerator(SolenoidValve(7), FlowmeterValve(12))#creates new keg object
 lcd = screen.Adafruit_CharLCD() #creates new screen object
 
 #initializes all gpio pins to make sure everything is working
