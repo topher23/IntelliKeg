@@ -91,7 +91,9 @@ class Kegerator:
 			#charging & sms state
 			ounces = pricing.amountOZ(beer["amount"])
 			toChargeTwilio = pricing.calculate(beer["price"], beer["amount"])
-			toChargeStripe = int(toChargeTwilio*100)
+			toChargeStripe = int(float(toChargeTwilio)*100)
+#			print toChargeTwilio
+			print toChargeStripe
 
 			chargeData = {"api_key" : apikey, "username" : user["userid"], "price" : toChargeStripe}
 			returnval = requests.post("http://shaped-pride-770.appspot.com/account/purchase/", chargeData)			
