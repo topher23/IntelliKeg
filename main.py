@@ -10,14 +10,15 @@ import json
 
 apikey = "hello"
 def verifyPin(pin):
-	apikey = "hello"
+	global apikey
 	data = {"api_key":apikey, "userid":pin}
-	IDandPHONE = requests.post("http://shaped-pride-770.appspot.com/account/pin/", data)
+#	IDandPHONE = requests.post("http://shaped-pride-770.appspot.com/account/pin/", data)
+	IDandPHONE = {"phone" : 7039278262, "userid" : "test@test.com"}
 	if "error" in IDandPHONE:
 		return False
 	else:
-#		return IDandPHONE
-		return IDandPHONE.json()
+		return IDandPHONE
+#		return IDandPHONE.json()
 
 
 
@@ -25,9 +26,9 @@ class Kegerator:
 
 	def __init__ (self, solenoid, flowmeter, lcd):
 		#in reaility we will get these from the db
-		self.beer1price = 0.00571
+		self.beer1price = 73
 		self.beer1type = "Alewerks"
-		self.beer2price = 0.00450
+		self.beer2price = 82
 		self.lcd = lcd 
 		self.beer2type =  "Shock Top"
 		self.solenoid = solenoid
@@ -43,7 +44,7 @@ class Kegerator:
 	def beerSelection(self, beer):
 		if beer == "*":
 			return {"price": self.beer1price, "type": self.beer1type, "amount":0}
-		elif beer == "\\":
+		elif beer == "/":
 			return {"price": self.beer2price, "type": self.beer2type, "amount":0}
 		else:
 			return False
@@ -58,40 +59,44 @@ class Kegerator:
 			
 			#pin checking
 			self.lcd.begin(1,16)
-			self.lcd.message("Please enter your pin.")
+			self.lcd.clear()
+			self.lcd.message("Please enter \nyour pin.")
 			user = False
 			while not user:
 				user = verifyPin(int(raw_input()))
 				if not user:
-					self.lcd.message("pin incorrect. try again.")
+					self.lcd.clear()
+					self.lcd.message("pin incorrect.\ntry again.")
+			self.lcd.clear()
 			self.lcd.message("User validated.\n Welcome.")
 			time.sleep(2)
 
 			
 			#beer selection
-			self.lcd.message("Choose Beer. \n\ =left, * =right")
-			beer = self.beerSelection(raw_input())
 			while not beer:
+				self.lcd.clear()
+				self.lcd.message("Choose Beer.\n/=left, *=right")
 				beer = self.beerSelection(raw_input())
 				if not beer:
+					self.lcd.clear()
 					self.lcd.message("Invalid choice \n Try again")
 					time.sleep(2)
 
 
 			#actual dispensing of the beer
 			self.solenoid.open()
-			beer["amount"] = self.flowmeter.flowing()
+			testamount = beer["amount"] = self.flowmeter.flowing()
 			self.solenoid.close()
-
 
 			#charging & sms state
 			ounces = pricing.amountOZ(beer["amount"])
-			toCharge = int(pricing.calculate(beer["price"], beer["amount"]))
-			chargeData = {"api_key" : apikey, "username" : user["userid"], "price" : toCharge}
-			returnval = requests.post("http://shaped-pride-770.appspot.com/account/purchase/", chargeData)
-			print returnval			
+			toChargeTwilio = pricing.calculate(beer["price"], beer["amount"])
+			toChargeStripe = int(toChargeTwilio*100)
+
+			chargeData = {"api_key" : apikey, "username" : user["userid"], "price" : toChargeStripe}
+			returnval = requests.post("http://shaped-pride-770.appspot.com/account/purchase/", chargeData)			
 			if "error" not in returnval:
-				new_returnval = sms.send_receipt(user["phone"], ounces, beer["type"], toCharge)
+				new_returnval = sms.send_receipt(user["phone"], ounces, beer["type"], toChargeTwilio)
 				if new_returnval:
 					self.lcd.message("Transaction completed. Thank You")
 					time.sleep(5)
