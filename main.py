@@ -1,5 +1,5 @@
 import RPi.GPIO as GPIO
-import screen
+from screen import Adafruit_CharLCD
 import solenoid
 import pricing
 import flowmeter
@@ -8,36 +8,40 @@ import requests
 import sms
 import json
 
+apikey = "hello"
+def verifyPin(pin):
+	global apikey
+	data = {"apikey":apikey, "userid":pin}
+#	IDandPHONE = requests.post("http://shaped-pride-770.appspot.com/account/pin", params=data)
+	IDandPHONE = {"phone":7039278262, "userid":12345}
+	if "error" in IDandPHONE:
+		return False
+	else:
+		return IDandPHONE
+#		return IDandPHONE.json()
 
 
 
 class Kegerator:
 
-	def __init__ (self, solenoid, flowmeter):
+	def __init__ (self, solenoid, flowmeter, lcd):
 		#in reaility we will get these from the db
 		self.beer1price = 0.00571
 		self.beer1type = "Alewerks"
 		self.beer2price = 0.00450
+		self.lcd = lcd 
 		self.beer2type =  "Shock Top"
-		self.apikey = "intellikeg123"
 		self.solenoid = solenoid
 		self.flowmeter = flowmeter
 
 
 	#turn on gpio pins
 	def initialize(self):
-		GPIO.setmode(GPIO.BOARD)
+		GPIO.setmode(GPIO.BCM)
 		
-	def pinChecking(pin):
-		data = {"apikey":self.apikey, "userid":ident}
-		IDandPHONE = requests.post("shaped-pride-770.appspot.com/account/user", params=data)
-		if IDandPHONE == 0:
-			return False
-		else:
-			return IDandPHONE.json()
 
 
-	def beerSelection(beer):
+	def beerSelection(self, beer):
 		if beer == "*":
 			return {"price": self.beer1price, "type": self.beer1type, "amount":0}
 		elif beer == "\\":
@@ -46,6 +50,7 @@ class Kegerator:
 			return False
 
 	def run(self):
+		global apikey
 		attempts = 0
 		while True:
 			beertype = True
@@ -53,49 +58,53 @@ class Kegerator:
 
 			
 			#pin checking
-			lcd.message("Please enter your pin.")
+			self.lcd.begin(1,16)
+			self.lcd.message("Please enter your pin.")
 			user = False
 			while not user:
-				user = pinChecking(raw_input())
+				user = verifyPin(raw_input())
 				if not user:
-					lcd.message("pin incorrect. try again.")
-			lcd.message("User validate. Welcome.")
+					self.lcd.message("pin incorrect. try again.")
+			self.lcd.message("User validated.\n Welcome.")
 			time.sleep(2)
 
 			
 			#beer selection
-			lcd.message("Choose Beer. \n\ =left, * =right")
+			self.lcd.message("Choose Beer. \n\ =left, * =right")
+			beer = self.beerSelection(raw_input())
 			while not beer:
-				beer = beerSelection(raw_input())
+				beer = self.beerSelection(raw_input())
 				if not beer:
-					lcd.message("Invalid choice \n Try again")
+					self.lcd.message("Invalid choice \n Try again")
 					time.sleep(2)
 
 
 			#actual dispensing of the beer
-			keg.solenoid.open()
-			beer["amount"] = keg.flowmeter.flowing()
-			keg.solenoid.close()
+			self.solenoid.open()
+			beer["amount"] = self.flowmeter.flowing()
+			self.solenoid.close()
 
 
 			#charging & sms state
 			ounces = pricing.amountOZ(beer["amount"])
 			toCharge = pricing.calculate(beer["price"], beer["amount"])
-			chargeData = {self.apikey, user["id"], toCharge}
-			returnval = requests.post("shaped-pride-770.appspot.com/account/user/charge", params=chargeData)
+			chargeData = {apikey, user["userid"], toCharge}
+#			returnval = requests.post("http://shaped-pride-770.appspot.com/account/user/charge", params=chargeData)
+			returnval = 1
+			
 			if returnval:
-				new_returnval = sms.send_recipt(user["phone"], ounces, beer["type"], toCharge)
+				new_returnval = sms.send_receipt(user["phone"], ounces, beer["type"], toCharge)
 				if new_returnval:
-					lcd.message("Transaction completed. Thank You")
+					self.lcd.message("Transaction completed. Thank You")
 					time.sleep(5)
 				elif new_returnval == False:
-					lcd.message("Invalid account info. Abort.")
+					self.lcd.message("Invalid account info. Abort.")
 					time.sleep(2)
 				elif attempts >= 5:
-					lcd.message("Invalid account info. Abort.")
+					self.lcd.message("Invalid account info. Abort.")
 					time.sleep(2)
 			else:
-				lcd.message("Invalid charge info. Abort.")
+				self.lcd.message("Invalid charge info. Abort.")
 				time.sleep(2)
 								
 
@@ -104,8 +113,9 @@ class Kegerator:
 #an make a call to stripe with this user id. 
 
 
-keg = Kegerator(SolenoidValve(7), FlowmeterValve(12))#creates new keg object
-lcd = screen.Adafruit_CharLCD() #creates new screen object
+lcd = Adafruit_CharLCD() #creates new screen object
+lcd.begin(1,16)
+keg = Kegerator(solenoid.SolenoidValve(4), flowmeter.FlowmeterValve(18),lcd)#creates new keg object
 
 #initializes all gpio pins to make sure everything is working
 keg.initialize()
