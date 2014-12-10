@@ -10,15 +10,14 @@ import json
 
 apikey = "hello"
 def verifyPin(pin):
-	global apikey
-	data = {"apikey":apikey, "userid":pin}
-#	IDandPHONE = requests.post("http://shaped-pride-770.appspot.com/account/pin", params=data)
-	IDandPHONE = {"phone":7039278262, "userid":12345}
+	apikey = "hello"
+	data = {"api_key":apikey, "userid":pin}
+	IDandPHONE = requests.post("http://shaped-pride-770.appspot.com/account/pin/", data)
 	if "error" in IDandPHONE:
 		return False
 	else:
-		return IDandPHONE
-#		return IDandPHONE.json()
+#		return IDandPHONE
+		return IDandPHONE.json()
 
 
 
@@ -62,7 +61,7 @@ class Kegerator:
 			self.lcd.message("Please enter your pin.")
 			user = False
 			while not user:
-				user = verifyPin(raw_input())
+				user = verifyPin(int(raw_input()))
 				if not user:
 					self.lcd.message("pin incorrect. try again.")
 			self.lcd.message("User validated.\n Welcome.")
@@ -87,12 +86,11 @@ class Kegerator:
 
 			#charging & sms state
 			ounces = pricing.amountOZ(beer["amount"])
-			toCharge = pricing.calculate(beer["price"], beer["amount"])
-			chargeData = {apikey, user["userid"], toCharge}
-#			returnval = requests.post("http://shaped-pride-770.appspot.com/account/user/charge", params=chargeData)
-			returnval = 1
-			
-			if returnval:
+			toCharge = int(pricing.calculate(beer["price"], beer["amount"]))
+			chargeData = {"api_key" : apikey, "username" : user["userid"], "price" : toCharge}
+			returnval = requests.post("http://shaped-pride-770.appspot.com/account/purchase/", chargeData)
+			print returnval			
+			if "error" not in returnval:
 				new_returnval = sms.send_receipt(user["phone"], ounces, beer["type"], toCharge)
 				if new_returnval:
 					self.lcd.message("Transaction completed. Thank You")
@@ -113,13 +111,14 @@ class Kegerator:
 #an make a call to stripe with this user id. 
 
 
-lcd = Adafruit_CharLCD() #creates new screen object
-lcd.begin(1,16)
-keg = Kegerator(solenoid.SolenoidValve(4), flowmeter.FlowmeterValve(18),lcd)#creates new keg object
+if __name__ == "__main__":
+	lcd = Adafruit_CharLCD() #creates new screen object
+	lcd.begin(1,16)
+	keg = Kegerator(solenoid.SolenoidValve(4), flowmeter.FlowmeterValve(18),lcd)#creates new keg object
 
-#initializes all gpio pins to make sure everything is working
-keg.initialize()
+	#initializes all gpio pins to make sure everything is working
+	keg.initialize()
 
-#enter loop to wait for user to approach
-keg.run()
+	#enter loop to wait for user to approach
+	keg.run()
 
