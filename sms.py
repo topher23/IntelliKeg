@@ -41,7 +41,7 @@ def send_receipt(phone_number, quantity, beer, total):
     curr_time = str(datetime.now())
     msg_body = "Purchased {0} oz of {1} for a total of ${2} at {3}"\
         .format(quantity, beer, total, curr_time)
-    __send(phone_number, msg_body)
+    return __send(phone_number, msg_body)
 
 
 def send_pin(phone_number, name, pin):
@@ -73,7 +73,7 @@ def send_pin(phone_number, name, pin):
 
     """
     msg_body = "Welcome {0}! Your PIN # is {1}".format(name, pin)
-    __send(phone_number, msg_body)
+    return __send(phone_number, msg_body)
 
 
 ###########################################################################
