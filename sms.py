@@ -34,6 +34,9 @@ def send_receipt(phone_number, quantity, beer, total):
 
         send_receipt("+14125236164", 12, "Blue Moon", 1.25)
 
+    Return:
+    True if message was sent succesfully.  False if otherwise
+
     """
     curr_time = str(datetime.now())
     msg_body = "Purchased {0} oz of {1} for a total of ${2} at {3}"\
@@ -65,6 +68,9 @@ def send_pin(phone_number, name, pin):
     will send a text message to (412) 523-6164 with the contents:
     'Welcome Nick!  Your PIN # is 1234'
 
+    Return:
+    True if message was sent succesfully.  False if otherwise
+
     """
     msg_body = "Welcome {0}! Your PIN # is {1}".format(name, pin)
     __send(phone_number, msg_body)
@@ -82,23 +88,16 @@ def __send(to_number, msg_body):
     from_number = "+14122468519"  # This is a valid Twilio number
 
     try:
-        message_sent = False
+        message = client.messages.create(to=to_number,
+                                         from_=from_number,
+                                         body=msg_body)
 
-        # If there was an error sending the message, this will loop
-        #   and send the message again until it succeeds
-        while not message_sent:
-            message = client.messages.create(to=to_number,
-                                             from_=from_number,
-                                             body=msg_body)
-
-            # If there was an error sending the message, the errorcode
-            #   attribute is set
-            if hasattr(message, 'errorcode'):
-                message_sent = False
-            else:
-                message_sent = True
-
-        print "SMS sent"
+        # If there was an error sending the message, the errorcode
+        #   attribute is set
+        if hasattr(message, 'errorcode'):
+            return False
+        else:
+            return True
 
     except socket.error, v:
         errorcode = v[0]
