@@ -20,5 +20,8 @@ pip - retrieved through apt-get
 requests - retrieved through pip
 Adafruit_CharLCD  - retrieved through apt-get
 
-
-
+parts used:
+solenoid - http://www.adafruit.com/products/996
+flowmeter - http://www.adafruit.com/products/828
+lcd screen - http://www.adafruit.com/products/399 (blue model)
+keypad - http://www.amazon.com/MillionAccessories-Numeric-Keyboard-Notebook-Computer/dp/B007DVM39A/
