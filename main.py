@@ -7,7 +7,6 @@ import time
 import requests
 import sms
 import json
-import signal
 import sys
 
 apikey = "hello"
@@ -141,7 +140,6 @@ if __name__ == "__main__":
 	keg.initialize()
 
 
-	signal.signal(signal.SIGINT, signal_handler)
 	#enter loop to wait for user to approach
 	keg.run()
 
