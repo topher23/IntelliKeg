@@ -2,6 +2,9 @@
 import time
 import datetime
 import RPi.GPIO as GPIO
+import main
+import pricing
+import screen
 
 class FlowmeterValve():
 
@@ -24,6 +27,11 @@ class FlowmeterValve():
 				count += 1
 				prevtime = time.time()
 				realtime = time.time()
+				if (count % 25) == 0:
+					self.lcd.clear()
+					ounces = pricing.amountOZ(count))
+					self.lcd.message("%s ounces\ntot: $%s" % (ounces, pricing.calculate(44, ounces))
+
 			else:
 				realtime = time.time()
 
